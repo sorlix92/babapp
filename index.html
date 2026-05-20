@@ -3,177 +3,279 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Baba Portál</title>
+    <title>BabApp - Kezdőlap</title>
     
-    <!-- Tailwind CSS betöltése -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     
-    <!-- React és ReactDOM betöltése -->
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    
-    <!-- Babel a JSX fordításhoz a böngészőben -->
+    <!-- Babel -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
 
     <style>
-        /* Egyedi animációk és finomhangolások */
-        body { background-color: #fafafa; }
-        .fade-in { animation: fadeIn 0.5s ease-in; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Quicksand:wght@400;600;700&display=swap');
+
+        :root {
+            --paper-bg: #fffdf5;
+            --text-color: #5d5d5d;
+        }
+
+        body { 
+            font-family: 'Quicksand', sans-serif; 
+            background-color: #f7f3e8; 
+            color: var(--text-color);
+            background-image: radial-gradient(#e5e5e5 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .handwritten { font-family: 'Patrick Hand', cursive; }
+
+        .paper-card {
+            background: var(--paper-bg);
+            box-shadow: 2px 4px 12px rgba(0,0,0,0.05);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .paper-card:active {
+            transform: scale(0.98);
+            box-shadow: 1px 2px 6px rgba(0,0,0,0.05);
+        }
+
+        .btn-primary {
+            background-color: #ffafcc;
+            color: white;
+            font-family: 'Quicksand', sans-serif;
+            font-weight: 700;
+            border-radius: 12px;
+            box-shadow: 0 4px 0 #cd84a1;
+            transition: all 0.1s;
+        }
+        .btn-primary:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 #cd84a1;
+        }
     </style>
 </head>
-<body>
+<body class="flex flex-col min-h-screen">
+
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect } = React;
 
-        // --- Ikonok (hogy ne kelljen külső csomag) ---
-        const IconBase = ({ children, className }) => (
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-                {children}
-            </svg>
-        );
+        // Vektoros SVG ikonok a tökéletes dizájn-azonossághoz
+        const Icons = {
+            Utensils: (props) => (
+                <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>
+                </svg>
+            ),
+            Moon: (props) => (
+                <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+                </svg>
+            ),
+            Baby: (props) => (
+                <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 12h.01"/><path d="M15 12h.01"/><path d="M10 16c.5.5 1.5.5 2 0"/><path d="M19 6.3a9 9 0 0 1 1.8 3.9 2 2 0 0 1 0 3.6 9 9 0 0 1-17.6 0 2 2 0 0 1 0-3.6A9 9 0 0 1 12 3c2 0 3.5 1.1 3.5 2.5s-.9 2.5-2 2.5c-.8 0-1.5-.4-1.5-1"/>
+                </svg>
+            ),
+            Idea: (props) => (
+                <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A5 5 0 0 0 8 8c0 1 .3 2.2 1.5 3 1 .7 1.5 1.8 1.5 3h4z"/>
+                    <path d="M9 18h6M10 22h4"/>
+                </svg>
+            ),
+            Next: (props) => (
+                <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+            ),
+            Stars: (props) => (
+                <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+                </svg>
+            )
+        };
 
-        const BabyIcon = ({ className }) => (
-            <IconBase className={className}>
-                <path d="M9 12h.01"/><path d="M15 12h.01"/><path d="M10 16c.5.3 1.2.5 2 .5s1.5-.2 2-.5"/><path d="M19 6.3a9 9 0 0 1 1.8 3.9 2 2 0 0 1 0 3.8 9 9 0 0 1-17.6 0 2 2 0 0 1 0-3.8A9 9 0 0 1 12 3c2 0 3.5 1.1 3.5 2.5s-.9 2.5-2 2.5c-.8 0-1.5-.4-1.5-1"/>
-            </IconBase>
-        );
-        const UtensilsIcon = ({ className }) => (
-            <IconBase className={className}>
-                <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>
-            </IconBase>
-        );
-        const MoonIcon = ({ className }) => (
-            <IconBase className={className}>
-                <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
-            </IconBase>
-        );
-        const StarIcon = ({ className }) => (
-            <IconBase className={className}>
-                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-            </IconBase>
-        );
-        const SettingsIcon = ({ className }) => (
-            <IconBase className={className}>
-                <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.39a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>
-            </IconBase>
-        );
-        const ArrowRightIcon = ({ className }) => (
-            <IconBase className={className}>
-                <path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>
-            </IconBase>
-        );
+        const App = () => {
+            const [tipIndex, setTipIndex] = React.useState(0);
 
-        // --- Fő Applikáció ---
+            // Lapozható szülői tippek
+            const tips = [
+                {
+                    title: "Fehér zaj hatása",
+                    text: "A fehér zaj azért nyugtatja meg a babákat, mert az anyaméhben megszokott ritmikus morajlásokra emlékezteti őket. Emellett hatékonyan elfedi a hirtelen lakáshangokat."
+                },
+                {
+                    title: "Hozzátáplálás üteme",
+                    text: "Az első évben az ételek bevezetése nem a kalóriapótlásról, hanem az ismerkedésről és az allergének óvatos teszteléséről szól. Haladjatok kényelmes, nyugodt tempóban!"
+                },
+                {
+                    title: "Ébrenléti ablakok",
+                    text: "Figyelj a baba fáradtsági jeleire (szem dörzsölése, fül húzgálása). Ha betartod az életkornak megfelelő ébrenléti időket, sokkal könnyebb lesz az elalvás."
+                }
+            ];
 
-        function BabyDashboard() {
-            const [greeting, setGreeting] = useState('');
-
-            useEffect(() => {
-                const hour = new Date().getHours();
-                if (hour < 10) setGreeting('Jó reggelt!');
-                else if (hour < 18) setGreeting('Szép napot!');
-                else setGreeting('Szép estét!');
-            }, []);
-
-            const handleNavigation = (url) => {
-                window.location.href = url;
+            const nextTip = () => {
+                setTipIndex((prev) => (prev + 1) % tips.length);
             };
 
             return (
-                <div className="min-h-screen font-sans text-slate-800 flex flex-col items-center fade-in">
-                
-                {/* --- Minimalista Fejléc --- */}
-                <div className="w-full max-w-md px-8 pt-12 pb-6">
-                    <div className="flex justify-between items-start mb-6">
-                    <div>
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] mb-1 block">Baba Portál</span>
-                        <h1 className="text-3xl font-light text-slate-800 tracking-tight">{greeting}</h1>
-                    </div>
-                    <div className="w-10 h-10 bg-white rounded-full shadow-sm flex items-center justify-center border border-slate-100">
-                        <BabyIcon className="w-5 h-5 text-slate-400" />
-                    </div>
-                    </div>
-                </div>
-
-                {/* --- Fő Tartalom --- */}
-                <div className="w-full max-w-md px-6 grid grid-cols-1 gap-5 pb-20">
+                <div className="min-h-screen pb-24 max-w-3xl mx-auto flex flex-col justify-between">
                     
-                    {/* 1. Hozzátáplálás Kártya */}
-                    <div 
-                    onClick={() => handleNavigation('hozzataplalas.html')}
-                    className="group bg-white p-6 rounded-3xl shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)] border border-slate-50 hover:border-green-100 hover:shadow-lg hover:shadow-green-100/50 transition-all duration-300 cursor-pointer relative overflow-hidden"
-                    >
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-green-50 rounded-bl-[4rem] -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
-                    
-                    <div className="relative z-10 flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                        <div className="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center text-green-600 group-hover:bg-green-500 group-hover:text-white transition-colors duration-300">
-                            <UtensilsIcon className="w-6 h-6" />
+                    {/* FELSŐ DEKORATÍV BORÍTÓ */}
+                    <div className="bg-white rounded-b-[2rem] shadow-sm mb-6 overflow-hidden border-b-4 border-[#FFC8DD] border-dashed">
+                        
+                        {/* Felső vékony sáv */}
+                        <div className="bg-[#FFC8DD] p-2 flex justify-center items-center px-4">
+                            <span className="text-white text-xs font-bold tracking-widest uppercase">BabApp - 1 Éves korig</span>
                         </div>
-                        <div>
-                            <h3 className="text-lg font-semibold text-slate-800">Hozzátáplálás</h3>
-                            <p className="text-sm text-slate-400 font-medium">100 étel lista</p>
+
+                        {/* Kedves üdvözlő fejléc */}
+                        <div className="p-8 text-center relative">
+                            {/* Díszítő pasztell körök a háttérben */}
+                            <div className="absolute top-4 left-4 w-8 h-8 rounded-full bg-[#CDEAC0] opacity-40"></div>
+                            <div className="absolute bottom-4 right-4 w-6 h-6 rounded-full bg-[#BDE0FE] opacity-40"></div>
+                            <div className="absolute top-10 right-10 w-4 h-4 rounded-full bg-[#FAE1DD] opacity-40"></div>
+                            
+                            <div className="mx-auto w-16 h-16 bg-[#FFC8DD] bg-opacity-20 rounded-full flex items-center justify-center text-pink-500 mb-3 shadow-inner">
+                                <Icons.Baby className="w-8 h-8 text-[#ffafcc]" />
+                            </div>
+                            
+                            <h1 className="text-4xl font-bold text-gray-700 mb-1" style={{fontFamily: 'Patrick Hand'}}>Szia, Anyu és Apu! 👋</h1>
+                            <p className="text-gray-400 text-sm font-semibold tracking-wide uppercase">Minden segítség egy helyen a kisbabádhoz</p>
                         </div>
-                        </div>
-                        <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 transition-all duration-300">
-                            <ArrowRightIcon className="w-4 h-4 text-green-500" />
-                        </div>
-                    </div>
                     </div>
 
-                    {/* 2. Altatás Kártya */}
-                    <div 
-                    onClick={() => handleNavigation('altatas.html')}
-                    className="group bg-white p-6 rounded-3xl shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)] border border-slate-50 hover:border-indigo-100 hover:shadow-lg hover:shadow-indigo-100/50 transition-all duration-300 cursor-pointer relative overflow-hidden"
-                    >
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-50 rounded-bl-[4rem] -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+                    {/* FŐMENÜ KÁRTYÁK */}
+                    <div className="px-4 space-y-6 flex-grow">
+                        
+                        <h2 className="text-2xl font-bold text-gray-700 px-2 mb-2" style={{fontFamily: 'Patrick Hand'}}>Válassz egy modult:</h2>
 
-                    <div className="relative z-10 flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                        <div className="w-12 h-12 bg-indigo-100 rounded-2xl flex items-center justify-center text-indigo-600 group-hover:bg-indigo-500 group-hover:text-white transition-colors duration-300">
-                            <MoonIcon className="w-6 h-6" />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            
+                            {/* 1. HOZZÁTÁPLÁLÁS MENÜPONT (Zöld dekor) */}
+                            <a href="hozzataplalas.html" className="block">
+                                <div className="paper-card relative border-t-4 border-[#CDEAC0]">
+                                    {/* Tépett cellux dekoráció */}
+                                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 w-28 h-5 bg-[#f0f0f0] bg-opacity-75 rotate-1 shadow-xs z-10" style={{clipPath: 'polygon(0 0, 100% 0, 95% 100%, 5% 100%)'}}></div>
+                                    
+                                    <div className="p-5 flex items-start gap-4">
+                                        <div className="w-12 h-12 rounded-xl bg-[#CDEAC0] bg-opacity-30 flex items-center justify-center text-gray-600 flex-shrink-0">
+                                            <Icons.Utensils className="w-6 h-6 text-[#4A7c59]" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <h3 className="text-xl font-bold text-gray-700 handwritten">Első 100 Étel</h3>
+                                            <p className="text-gray-400 text-xs mt-1 leading-relaxed">
+                                                Kóstolási napló, receptek, allergének és étkezés előtti ellenőrző lista.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+
+                            {/* 2. ALTATÁS & FEHÉR ZAJ (Levendula lila dekor) */}
+                            {/* MEGJEGYZÉS FEJLESZTŐKNEK: az alábbi href átírható "whitenoise.html"-re, ha átnevezed az altatas.html fájlt! */}
+                            <a href="altatas.html" className="block">
+                                <div className="paper-card relative border-t-4 border-[#cdb4db]">
+                                    {/* Tépett cellux dekoráció */}
+                                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 w-28 h-5 bg-[#f0f0f0] bg-opacity-75 -rotate-1 shadow-xs z-10" style={{clipPath: 'polygon(0 0, 100% 0, 95% 100%, 5% 100%)'}}></div>
+                                    
+                                    <div className="p-5 flex items-start gap-4">
+                                        <div className="w-12 h-12 rounded-xl bg-[#cdb4db] bg-opacity-30 flex items-center justify-center text-gray-600 flex-shrink-0">
+                                            <Icons.Moon className="w-6 h-6 text-[#9a82a8]" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <h3 className="text-xl font-bold text-gray-700 handwritten">Altatás & Fehér Zaj</h3>
+                                            <p className="text-gray-400 text-xs mt-1 leading-relaxed">
+                                                Valós idejű megnyugtató fehér zajok, altatódalok és okos elhalkulás-időzítő.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+
+                            {/* 3. FEJLŐDÉSI MÉRFÖLDKÖVEK (Dashed - Hamarosan érkező stílus) */}
+                            <div className="paper-card relative border-t-2 border-dashed border-[#FFC8DD] opacity-60 cursor-default">
+                                <div className="p-5 flex items-start gap-4">
+                                    <div className="w-12 h-12 rounded-xl bg-[#FFC8DD] bg-opacity-20 flex items-center justify-center text-gray-400 flex-shrink-0">
+                                        <Icons.Stars className="w-6 h-6 text-[#ffafcc]" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center justify-between">
+                                            <h3 className="text-xl font-bold text-gray-400 handwritten">Mérföldkövek</h3>
+                                            <span className="text-[10px] uppercase tracking-wider font-bold bg-[#FFC8DD] bg-opacity-40 text-pink-600 px-2 py-0.5 rounded-md">Hamarosan</span>
+                                        </div>
+                                        <p className="text-gray-400 text-xs mt-1 leading-relaxed">
+                                            Mozgásfejlődés, beszéd és kognitív lépések havi lebontású követése.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
                         </div>
-                        <div>
-                            <h3 className="text-lg font-semibold text-slate-800">Altatás</h3>
-                            <p className="text-sm text-slate-400 font-medium">Napló & Figyelő</p>
+
+                        {/* INTERAKTÍV NAPI TIPP KÁRTYA (Kézzel tépett füzetlap stílus) */}
+                        <div className="paper-card border-l-8 border-[#FFC8DD] mt-8">
+                            <div className="p-6 bg-[url('https://www.transparenttextures.com/patterns/notebook.png')]">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h4 className="font-bold text-gray-700 text-lg flex items-center gap-1.5" style={{fontFamily: 'Patrick Hand'}}>
+                                        <Icons.Idea className="w-5 h-5 text-yellow-500" /> Napi szülői útravaló
+                                    </h4>
+                                    <button 
+                                        onClick={nextTip}
+                                        className="text-xs bg-pink-50 hover:bg-pink-100 text-[#ffafcc] font-bold px-3 py-1.5 rounded-xl flex items-center gap-1 transition-colors"
+                                    >
+                                        Lássuk a következőt <Icons.Next className="w-3 h-3" />
+                                    </button>
+                                </div>
+                                <div className="transition-all duration-300">
+                                    <h5 className="font-bold text-sm text-gray-600 mb-1">{tips[tipIndex].title}</h5>
+                                    <p className="text-gray-500 text-xs leading-relaxed">
+                                        {tips[tipIndex].text}
+                                    </p>
+                                </div>
+                                <div className="mt-4 text-right">
+                                    <p className="handwritten text-gray-400 text-lg transform -rotate-1">
+                                        "Minden nap egy új csoda!"
+                                    </p>
+                                </div>
+                            </div>
                         </div>
+
+                    </div>
+
+                    {/* ALSÓ NAVIGÁCIÓS SÁV - TÖKÉLETES DIZÁJN EGYSÉG */}
+                    <nav className="bg-white border-t border-gray-100 px-6 py-4 rounded-t-[2rem] shadow-[0_-4px_24px_rgba(0,0,0,0.04)] fixed bottom-0 left-0 right-0 z-50">
+                        <div className="flex justify-around items-center">
+                            <a href="index.html" className="flex flex-col items-center text-[#ffafcc] font-bold">
+                                <svg className="w-6 h-6 text-[#ffafcc]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+                                </svg>
+                                <span className="text-xs font-semibold mt-1">Főoldal</span>
+                            </a>
+                            <a href="hozzataplalas.html" className="flex flex-col items-center text-gray-400 hover:text-emerald-500 transition-colors">
+                                <Icons.Utensils className="w-6 h-6" />
+                                <span className="text-xs font-semibold mt-1">Ételek</span>
+                            </a>
+                            <a href="altatas.html" className="flex flex-col items-center text-gray-400 hover:text-[#cdb4db] transition-colors">
+                                <Icons.Moon className="w-6 h-6" />
+                                <span className="text-xs font-semibold mt-1">Altatás</span>
+                            </a>
                         </div>
-                        <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 transition-all duration-300">
-                            <ArrowRightIcon className="w-4 h-4 text-indigo-500" />
-                        </div>
-                    </div>
-                    </div>
-
-                    {/* Kiegészítő kártyák */}
-                    <div className="grid grid-cols-2 gap-4 mt-2">
-                    {/* Mérföldkövek */}
-                    <div className="bg-white p-5 rounded-3xl shadow-[0_2px_15px_-8px_rgba(0,0,0,0.05)] border border-slate-50 flex flex-col items-center justify-center text-center gap-3 hover:scale-[1.02] transition-transform cursor-pointer">
-                        <StarIcon className="w-6 h-6 text-orange-300" />
-                        <span className="text-sm font-semibold text-slate-600">Mérföldkövek</span>
-                    </div>
-
-                    {/* Beállítások */}
-                    <div className="bg-white p-5 rounded-3xl shadow-[0_2px_15px_-8px_rgba(0,0,0,0.05)] border border-slate-50 flex flex-col items-center justify-center text-center gap-3 hover:scale-[1.02] transition-transform cursor-pointer">
-                        <SettingsIcon className="w-6 h-6 text-slate-300" />
-                        <span className="text-sm font-semibold text-slate-600">Beállítások</span>
-                    </div>
-                    </div>
-
-                </div>
-
-                <div className="mt-auto py-6 text-center">
-                    <p className="text-xs text-slate-300 font-medium">verzió 1.1 • Minimal</p>
-                </div>
+                    </nav>
 
                 </div>
             );
-        }
+        };
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<BabyDashboard />);
+        root.render(<App />);
     </script>
 </body>
 </html>
