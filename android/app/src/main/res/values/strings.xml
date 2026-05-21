@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Babapp</string>
+    <string name="title_activity_main">Babapp</string>
+    <string name="package_name">com.babapp.app</string>
+    <string name="custom_url_scheme">com.babapp.app</string>
+</resources>

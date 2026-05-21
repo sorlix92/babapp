@@ -1,0 +1,198 @@
+@import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Quicksand:wght@400;600;700&family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap');
+@import "tailwindcss";
+
+:root {
+    --paper-bg: #fffdf5;
+    --text-color: #5d5d5d;
+}
+
+body { 
+    font-family: 'Quicksand', sans-serif; 
+    background-color: #f7f3e8; 
+    color: var(--text-color);
+    background-image: radial-gradient(#e5e5e5 1px, transparent 1px);
+    background-size: 20px 20px;
+    -webkit-tap-highlight-color: transparent;
+    transition: background-color 0.5s, color 0.5s, background-image 0.5s;
+}
+
+/* Kézírás stílus */
+.handwritten { 
+    font-family: 'Patrick Hand', cursive; 
+}
+
+/* Füzetlap kártya stílus */
+.paper-card {
+    background: var(--paper-bg);
+    box-shadow: 2px 4px 12px rgba(0,0,0,0.05);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s, background-color 0.5s;
+}
+
+.paper-card:active {
+    transform: scale(0.98);
+    box-shadow: 1px 2px 6px rgba(0,0,0,0.05);
+}
+
+/* Elsődleges gombrendszer */
+.btn-primary {
+    background-color: #ffafcc;
+    color: white;
+    font-family: 'Quicksand', sans-serif;
+    font-weight: 700;
+    border-radius: 12px;
+    box-shadow: 0 4px 0 #cd84a1;
+    transition: all 0.1s;
+}
+
+.btn-primary:active {
+    transform: translateY(4px);
+    box-shadow: 0 0 0 #cd84a1;
+}
+
+/* Egyedi csekklista jelölőnégyzet */
+.checkbox-container {
+    position: relative;
+    cursor: pointer;
+    user-select: none;
+}
+
+.custom-box {
+    width: 24px;
+    height: 24px;
+    border: 2px solid #ccc;
+    border-radius: 6px;
+    background-color: white;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tick-mark {
+    transform: scale(0);
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.is-checked .tick-mark { 
+    transform: scale(1); 
+}
+
+.is-checked .custom-box { 
+    border-color: #88d498; 
+    background-color: #f0fff4; 
+}
+
+/* Aktív fehér zaj kártya stílusa */
+.sound-active-card {
+    border-color: #cdb4db !important;
+    background-color: #fbf8ff !important;
+    box-shadow: inset 0 0 8px rgba(205, 180, 219, 0.15), 2px 4px 12px rgba(205, 180, 219, 0.1) !important;
+}
+
+/* Meleg tónusú Éjszakai Mód (altatáshoz és fehér zajhoz) */
+.night-theme {
+    background-color: #1a1815 !important;
+    color: #c9bfb3 !important;
+    background-image: radial-gradient(#2d2922 1px, transparent 1px) !important;
+}
+
+.night-theme .paper-card {
+    background: #23211c !important;
+    box-shadow: 2px 4px 16px rgba(0,0,0,0.3) !important;
+    border-color: #33302a !important;
+}
+
+.night-theme .text-gray-700,
+.night-theme .text-slate-800,
+.night-theme .text-gray-800,
+.night-theme h1,
+.night-theme h2,
+.night-theme h3,
+.night-theme h4,
+.night-theme h5 {
+    color: #d8cebf !important;
+}
+
+.night-theme .text-gray-400 {
+    color: #7d7568 !important;
+}
+
+.night-theme .bg-gray-50,
+.night-theme .bg-slate-50,
+.night-theme .bg-\[\#fffdfa\] {
+    background-color: #2b2823 !important;
+}
+
+.night-theme .sound-active-card {
+    border-color: #8a7596 !important;
+    background-color: #2c2530 !important;
+}
+
+/* Pulzáló Glow effekt lejátszáskor */
+@keyframes pulse-glow {
+    0%, 100% { transform: scale(1); opacity: 0.35; filter: blur(16px); }
+    50% { transform: scale(1.18); opacity: 0.65; filter: blur(24px); }
+}
+
+.pulsing-glow {
+    animation: pulse-glow 4s ease-in-out infinite;
+}
+
+/* Inter & JetBrains Mono betűtípus osztályok */
+.font-sans-inter {
+    font-family: 'Inter', sans-serif;
+}
+
+.font-mono-jb {
+    font-family: 'JetBrains Mono', monospace;
+}
+
+/* Blob animációk */
+@keyframes blob {
+    0% { transform: translate(0px, 0px) scale(1); }
+    33% { transform: translate(30px, -50px) scale(1.1); }
+    66% { transform: translate(-20px, 20px) scale(0.9); }
+    100% { transform: translate(0px, 0px) scale(1); }
+}
+
+.animate-blob { 
+    animation: blob 7s infinite; 
+}
+
+.animation-delay-2000 { 
+    animation-delay: 2s; 
+}
+
+.animation-delay-4000 { 
+    animation-delay: 4s; 
+}
+
+/* Nyomtatási nézet a bevásárlólistához */
+@media print {
+    body { 
+        background: white !important; 
+        background-image: none !important; 
+        color: black !important;
+    }
+    .no-print { 
+        display: none !important; 
+    }
+    .print-only { 
+        display: block !important; 
+    }
+    .paper-card { 
+        box-shadow: none !important; 
+        border: 1px solid #eee !important; 
+        break-inside: avoid; 
+    }
+    .print-cols { 
+        column-count: 2; 
+        column-gap: 20px; 
+    }
+}
+
+.print-only { 
+    display: none; 
+}
