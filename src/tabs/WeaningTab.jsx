@@ -58,6 +58,139 @@ const DEFAULT_ALLERGENS = [
     'Dió olaj'
 ];
 
+const BABY_STAGES = [
+    {
+        id: 0,
+        name: "Tej-manó",
+        minProgress: 0,
+        description: "Alvó baba cumisüveggel - Még csak ismerkedünk a világgal.",
+        image: "/baby_stage1.png"
+    },
+    {
+        id: 1,
+        name: "Ülő Felfedező",
+        minProgress: 10,
+        description: "Kíváncsi baba előkében - Elkezdtük a kóstolgatást!",
+        image: "/baby_stage2.png"
+    },
+    {
+        id: 2,
+        name: "Mászó Rágcsa",
+        minProgress: 25,
+        description: "Mászó baba első fogacskával - Már bátran rágcsálunk!",
+        image: "/baby_stage3.png"
+    },
+    {
+        id: 3,
+        name: "Falatozó Bajnok",
+        minProgress: 50,
+        description: "Maszatos baba az etetőszékben - Imádjuk az új ízeket!",
+        image: "/baby_stage4.png"
+    },
+    {
+        id: 4,
+        name: "Gourmet Kis-Séf",
+        minProgress: 75,
+        description: "Álló kisgyerek séfsapkában - Igazi mindenevő gasztro-hős!",
+        image: "/baby_stage5.png"
+    }
+];
+
+const getCurrentStage = (pct) => {
+    let current = BABY_STAGES[0];
+    for (let i = 0; i < BABY_STAGES.length; i++) {
+        if (pct >= BABY_STAGES[i].minProgress) {
+            current = BABY_STAGES[i];
+        }
+    }
+    return current;
+};
+
+// Confetti Canvas Component
+const ConfettiCanvas = ({ active }) => {
+    const canvasRef = React.useRef(null);
+
+    useEffect(() => {
+        if (!active) return;
+        
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        let animationFrameId;
+        
+        const handleResize = () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        };
+        window.addEventListener('resize', handleResize);
+        handleResize();
+
+        const colors = ['#FFC8DD', '#ffafcc', '#cdb4db', '#bde0fe', '#a2d2ff', '#CDEAC0', '#ffb7d2', '#FFE5EC'];
+        const particles = Array.from({ length: 120 }, () => ({
+            x: Math.random() * canvas.width,
+            y: Math.random() * -canvas.height - 20,
+            r: Math.random() * 6 + 4,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            tilt: Math.random() * 10 - 5,
+            tiltAngleIncremental: Math.random() * 0.05 + 0.02,
+            tiltAngle: Math.random() * Math.PI,
+            speed: Math.random() * 3 + 3
+        }));
+
+        const draw = () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            let activeParticles = 0;
+            
+            particles.forEach(p => {
+                p.tiltAngle += p.tiltAngleIncremental;
+                p.y += p.speed;
+                p.x += Math.sin(p.tiltAngle) * 0.5;
+                p.tilt = Math.sin(p.tiltAngle) * 5;
+                
+                if (p.y < canvas.height) {
+                    activeParticles++;
+                } else if (active) {
+                    p.y = -20;
+                    p.x = Math.random() * canvas.width;
+                }
+                
+                ctx.beginPath();
+                ctx.lineWidth = p.r;
+                ctx.strokeStyle = p.color;
+                ctx.moveTo(p.x + p.tilt + p.r / 2, p.y);
+                ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r / 2);
+                ctx.stroke();
+            });
+            
+            if (activeParticles > 0 || active) {
+                animationFrameId = requestAnimationFrame(draw);
+            }
+        };
+        
+        draw();
+        
+        return () => {
+            window.removeEventListener('resize', handleResize);
+            cancelAnimationFrame(animationFrameId);
+            if (canvas) {
+                const context = canvas.getContext('2d');
+                if (context) {
+                    context.clearRect(0, 0, canvas.width, canvas.height);
+                }
+            }
+        };
+    }, [active]);
+
+    return (
+        <canvas 
+            ref={canvasRef} 
+            className="fixed inset-0 pointer-events-none z-[100] w-full h-full"
+        />
+    );
+};
+
+
 
 export const WeaningTab = () => {
     // LocalStorage-ból betöltés megbízható try-catch blokkokkal
@@ -118,6 +251,46 @@ export const WeaningTab = () => {
     const [showShoppingList, setShowShoppingList] = useState(false);
     const [filterFavorites, setFilterFavorites] = useState(false);
     const [filterProblems, setFilterProblems] = useState(false);
+
+    // Gamifikációs állapotok
+    const [highestUnlockedStage, setHighestUnlockedStage] = useState(() => {
+        try {
+            const saved = localStorage.getItem('babapp_weaning_highest_stage');
+            if (saved !== null) {
+                return parseInt(saved, 10);
+            }
+            
+            // Kezdeti számolás
+            const checked = JSON.parse(localStorage.getItem('babapp_weaning_checked') || '{}');
+            const cats = JSON.parse(localStorage.getItem('babapp_weaning_categories') || '[]');
+            const activeCats = cats.length > 0 ? cats : DEFAULT_FOOD_CATEGORIES;
+            let checkedCount = 0;
+            let totalCount = 0;
+            activeCats.forEach(c => {
+                if (c && c.items) {
+                    totalCount += c.items.length;
+                    c.items.forEach(i => {
+                        if (checked[i]) checkedCount++;
+                    });
+                }
+            });
+            const pct = Math.round((checkedCount / totalCount) * 100) || 0;
+            let initialStageId = 0;
+            for (let i = 0; i < BABY_STAGES.length; i++) {
+                if (pct >= BABY_STAGES[i].minProgress) {
+                    initialStageId = BABY_STAGES[i].id;
+                }
+            }
+            return initialStageId;
+        } catch (e) {
+            console.error("Hiba a highestUnlockedStage betöltésekor:", e);
+        }
+        return 0;
+    });
+
+    const [levelUpStage, setLevelUpStage] = useState(null);
+    const [showConfetti, setShowConfetti] = useState(false);
+    const [showMobileStages, setShowMobileStages] = useState(false);
 
     // Mentés LocalStorage-ba változáskor
     useEffect(() => {
@@ -303,6 +476,13 @@ export const WeaningTab = () => {
         localStorage.setItem('babapp_weaning_details', JSON.stringify(initialDetails));
         localStorage.removeItem('babapp_weaning_categories');
         
+        // Reset gamification
+        setHighestUnlockedStage(0);
+        localStorage.setItem('babapp_weaning_highest_stage', '0');
+        setLevelUpStage(null);
+        setShowConfetti(false);
+        setShowMobileStages(false);
+        
         alert("Minden adat sikeresen alaphelyzetbe állítva!");
     };
 
@@ -437,6 +617,28 @@ export const WeaningTab = () => {
         }
     });
     const progress = Math.round((checkedFoodCount / totalFoodItems) * 100) || 0;
+
+    const currentStage = getCurrentStage(progress);
+
+    useEffect(() => {
+        if (currentStage.id > highestUnlockedStage) {
+            setHighestUnlockedStage(currentStage.id);
+            localStorage.setItem('babapp_weaning_highest_stage', currentStage.id.toString());
+            setLevelUpStage(currentStage);
+            setShowConfetti(true);
+        }
+    }, [progress, currentStage, highestUnlockedStage]);
+
+    // Külön effekt a konfetti időzítőnek, hogy ne szakítsa félbe az állapotváltozás
+    useEffect(() => {
+        if (showConfetti) {
+            const timer = setTimeout(() => {
+                setShowConfetti(false);
+            }, 6000);
+            return () => clearTimeout(timer);
+        }
+    }, [showConfetti]);
+
 
     // Szűrt lista
     const filteredCategories = categories.map(cat => ({
@@ -786,6 +988,88 @@ export const WeaningTab = () => {
                         </button>
                     </div>
 
+                    {/* Baba fejlődési szakasz megjelenítése */}
+                    <div className="px-6 mb-4 select-none">
+                        <div 
+                            onClick={() => {
+                                if (window.innerWidth < 768) {
+                                    setShowMobileStages(true);
+                                }
+                            }}
+                            className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center gap-4 relative group cursor-pointer hover:bg-gray-50/50 transition-colors"
+                        >
+                            {/* Baba kép lebegő animációval */}
+                            <div className="relative flex-shrink-0">
+                                <div className="w-16 h-16 rounded-full border-2 border-[#ffc8dd] overflow-hidden bg-pink-50/50 flex items-center justify-center transition-transform hover:scale-105 duration-300 shadow-inner">
+                                    <img 
+                                        src={currentStage.image} 
+                                        alt={currentStage.name} 
+                                        className="w-14 h-14 object-contain animate-bounce-slow" 
+                                    />
+                                </div>
+                                <div className="absolute -bottom-1 -right-1 bg-[#ffafcc] text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold shadow-sm">
+                                    Lv.{currentStage.id + 1}
+                                </div>
+                            </div>
+                            
+                            {/* Szakasz leírása */}
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                    <span className="text-xs uppercase tracking-wider text-gray-400 font-bold">Aktuális szint</span>
+                                    <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
+                                </div>
+                                <h3 className="text-xl font-bold text-gray-700 handwritten leading-snug">{currentStage.name}</h3>
+                                <p className="text-xs text-gray-500 line-clamp-2 mt-0.5">{currentStage.description}</p>
+                            </div>
+                            
+                            {/* Hover Popover az 5 szakasz listájával (Desktop) */}
+                            <div className="stages-popover absolute left-1/2 top-full mt-3 transform -translate-x-1/2 w-72 bg-white/98 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100 p-4 z-20 transition-all duration-300 origin-top hidden md:block opacity-0 scale-95 pointer-events-none group-hover:pointer-events-auto group-hover:opacity-100 group-hover:scale-100">
+                                <h4 className="font-bold text-sm text-gray-700 border-b pb-2 mb-2 flex items-center justify-between">
+                                    <span>👶 Baba Fejlődési Napló</span>
+                                    <span className="text-[10px] bg-[#ffc8dd] text-gray-700 px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wider">Mérföldkövek</span>
+                                </h4>
+                                <div className="space-y-3">
+                                    {BABY_STAGES.map((stg) => {
+                                        const isUnlocked = progress >= stg.minProgress;
+                                        return (
+                                            <div key={stg.id} className={`flex items-center gap-3 transition-opacity ${isUnlocked ? 'opacity-100' : 'opacity-45'}`}>
+                                                <div className="relative flex-shrink-0">
+                                                    <div className={`w-10 h-10 rounded-full border overflow-hidden flex items-center justify-center bg-gray-50 ${isUnlocked ? 'border-green-300' : 'border-gray-200 filter grayscale'}`}>
+                                                        <img src={stg.image} alt={stg.name} className="w-8 h-8 object-contain" />
+                                                    </div>
+                                                    {isUnlocked ? (
+                                                        <div className="absolute -top-1 -right-1 bg-green-500 text-white rounded-full p-0.5 shadow-sm">
+                                                            <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                                                            </svg>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="absolute -top-1 -right-1 bg-gray-400 text-white rounded-full p-0.5 shadow-sm">
+                                                            <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                                            </svg>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex justify-between items-baseline">
+                                                        <span className={`text-xs font-bold ${isUnlocked ? 'text-gray-700' : 'text-gray-400'}`}>{stg.name}</span>
+                                                        <span className="text-[9px] font-bold text-[#ffafcc] font-mono">{stg.minProgress}%</span>
+                                                    </div>
+                                                    <p className="text-[10px] text-gray-400 truncate">{stg.description}</p>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                                <div className="text-[9px] text-gray-400 mt-3 pt-2 border-t text-center italic">
+                                    Kóstoltass új ételeket a szintlépéshez!
+                                </div>
+                                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 -mb-1 border-4 border-transparent border-b-white"></div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div className="px-6 mb-6">
                         <div className="flex justify-between items-end mb-2 px-2"><span className="handwritten text-xl text-gray-500">Haladás:</span><span className="font-bold text-[#ffafcc] text-lg">{progress}%</span></div>
                         <div className="h-4 bg-white rounded-full p-1 shadow-inner"><div className="h-full rounded-full bg-gradient-to-r from-[#ffafcc] to-[#ffc8dd] transition-all duration-1000" style={{width: `${progress}%`}}></div></div>
@@ -963,6 +1247,145 @@ export const WeaningTab = () => {
                     onSave={addCategory}
                     onClose={() => setShowNewCategoryModal(false)}
                 />
+            )}
+
+            {/* Mobil Bottom Sheet a mérföldkövekhez */}
+            {showMobileStages && (
+                <>
+                    {/* Backdrop */}
+                    <div 
+                        onClick={() => setShowMobileStages(false)}
+                        className="fixed inset-0 bg-black/50 z-[80] md:hidden animate-fade-in"
+                    />
+                    
+                    {/* Bottom Sheet */}
+                    <div className="fixed inset-x-0 bottom-0 max-h-[85vh] bg-white rounded-t-[2rem] shadow-2xl z-[85] p-6 flex flex-col md:hidden border-t-4 border-[#ffc8dd] animate-slide-up">
+                        {/* Húzóka/Drag handle dekorációnak */}
+                        <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-4 flex-shrink-0" />
+                        
+                        {/* Cím és Bezárás */}
+                        <div className="flex justify-between items-center mb-4 flex-shrink-0">
+                            <div>
+                                <h3 className="text-2xl font-bold text-gray-700 handwritten">Baba Mérföldkövek</h3>
+                                <p className="text-xs text-gray-400">Kóstoltass új ételeket a szintlépéshez!</p>
+                            </div>
+                            <button 
+                                onClick={() => setShowMobileStages(false)}
+                                className="bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-700 p-2 rounded-full transition-colors"
+                            >
+                                <Icons.Close className="w-5 h-5"/>
+                            </button>
+                        </div>
+                        
+                        {/* Szintek görgethető listája */}
+                        <div className="space-y-3 overflow-y-auto pb-4 pr-1">
+                            {BABY_STAGES.map((stg) => {
+                                const isUnlocked = progress >= stg.minProgress;
+                                const isActive = currentStage.id === stg.id;
+                                return (
+                                    <div 
+                                        key={stg.id} 
+                                        className={`flex items-center gap-4 p-3 rounded-2xl border transition-all ${
+                                            isActive 
+                                                ? 'bg-[#ffe5ec]/40 border-[#ffc8dd] ring-1 ring-[#ffc8dd]' 
+                                                : isUnlocked 
+                                                    ? 'bg-gray-50/50 border-gray-100' 
+                                                    : 'border-gray-100 opacity-50'
+                                        }`}
+                                    >
+                                        <div className="relative flex-shrink-0">
+                                            <div className={`w-14 h-14 rounded-full border overflow-hidden flex items-center justify-center bg-white ${
+                                                isUnlocked ? 'border-green-300' : 'border-gray-200 filter grayscale'
+                                            }`}>
+                                                <img src={stg.image} alt={stg.name} className="w-11 h-11 object-contain" />
+                                            </div>
+                                            {isUnlocked ? (
+                                                <div className="absolute -top-1 -right-1 bg-green-500 text-white rounded-full p-1 shadow-sm">
+                                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                </div>
+                                            ) : (
+                                                <div className="absolute -top-1 -right-1 bg-gray-400 text-white rounded-full p-1 shadow-sm">
+                                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                                    </svg>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex justify-between items-baseline mb-0.5">
+                                                <span className={`text-base font-bold ${isUnlocked ? 'text-gray-700' : 'text-gray-400'}`}>
+                                                    {stg.name} {isActive && <span className="text-[10px] bg-green-400 text-white px-1.5 py-0.5 rounded-full font-bold ml-1 uppercase">Aktív</span>}
+                                                </span>
+                                                <span className="text-xs font-bold text-[#ffafcc] font-mono">{stg.minProgress}%</span>
+                                            </div>
+                                            <p className="text-xs text-gray-500">{stg.description}</p>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </>
+            )}
+
+            {/* Konfetti Effekt */}
+            {showConfetti && <ConfettiCanvas active={showConfetti} />}
+
+            {/* Szintlépés Ünneplés Modal */}
+            {levelUpStage && (
+                <div className="fixed inset-0 bg-black/60 z-[90] flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in">
+                    <div className="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl relative text-center border-4 border-[#ffc8dd] overflow-hidden">
+                        
+                        <div className="absolute inset-0 bg-gradient-to-b from-[#ffe5ec]/30 via-transparent to-transparent pointer-events-none"></div>
+                        
+                        <button 
+                            onClick={() => {
+                                setLevelUpStage(null);
+                                setShowConfetti(false);
+                            }} 
+                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+                        >
+                            <Icons.Close className="w-6 h-6"/>
+                        </button>
+                        
+                        <div className="pt-4 pb-2 relative z-10">
+                            <span className="text-5xl">🎉</span>
+                            <h2 className="text-3xl font-extrabold text-[#ffafcc] mt-2 handwritten animate-bounce">Szintlépés!</h2>
+                            <p className="text-gray-500 font-semibold tracking-wide uppercase text-xs mt-1">Új mérföldkövet értetek el!</p>
+                        </div>
+                        
+                        <div className="my-6 flex justify-center relative z-10">
+                            <div className="w-36 h-36 rounded-full bg-[#ffe5ec] border-4 border-dashed border-[#ffafcc] flex items-center justify-center p-2 shadow-lg animate-pulse-slow">
+                                <img 
+                                    src={levelUpStage.image} 
+                                    alt={levelUpStage.name} 
+                                    className="w-28 h-28 object-contain" 
+                                />
+                            </div>
+                        </div>
+                        
+                        <div className="space-y-2 mb-6 relative z-10">
+                            <h3 className="text-2xl font-bold text-gray-700 handwritten">
+                                Babád mostantól: <span className="text-[#ffafcc] font-extrabold">{levelUpStage.name}</span>!
+                            </h3>
+                            <p className="text-sm text-gray-500 max-w-xs mx-auto italic">
+                                "{levelUpStage.description}"
+                            </p>
+                        </div>
+                        
+                        <button 
+                            onClick={() => {
+                                setLevelUpStage(null);
+                                setShowConfetti(false);
+                            }}
+                            className="w-full py-3.5 bg-gradient-to-r from-[#ffafcc] to-[#ffc8dd] hover:from-[#ff9ebb] hover:to-[#ffafcc] text-white font-extrabold rounded-2xl shadow-md transition-all active:scale-95 text-base uppercase tracking-wider relative z-10"
+                        >
+                            Szuper! Folytassuk!
+                        </button>
+                    </div>
+                </div>
             )}
         </div>
     );
